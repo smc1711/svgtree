@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+
+<script type="text/javascript">
+    TreeBuilder = function() {
+
+        var tree = {};
+
+        // Max number of children for any node.
+        var maxChildren = 15;
+
+        function getRandom() {
+            return ~~(Math.random() * maxChildren);
+        };
+
+        /* max number of nodes.*/
+        var level = 0, nodeCount = 32000, counter = -1, queue = [tree];
+
+        // actions s - select, i -insert.
+        var actionCodes = ["s", "i"];
+
+        // on result oe - on error, os - on success, n - none.
+        var onResultCodes = ["oe", "os", "n"];
+
+        // Ids of nodes which have been double clicked.
+        var activeIds = [];
+
+        /* make json tree using bfs approach. */
+        function makeTree() {
+
+            counter++;
+            tree['id'] = 'c' + counter;
+            tree['name'] = "table " + 0;//tnames[counter];
+            tree['children'] = [];
+            tree['action'] = actionCodes[0];
+            tree['onresult'] = onResultCodes[2];
+
+            while (queue.length > 0) {
+
+                var node = queue.shift();
+
+                var childCount = getRandom();
+
+                if (counter + childCount > nodeCount) break;
+
+                for (var i = 0; i < childCount; i++) {
+                    counter++;
+
+                    var obj = {};
+                    obj['id'] = "c" + counter;
+                    obj['name'] = "table " + counter;//tnames[~~(Math.random() * 553)];
+                    obj['children'] = [];
+                    obj['action'] = actionCodes[Math.round(Math.random())];
+
+                    // If parent is insert then child could be on error or success else none.
+                    obj['onresult'] = (node.action == actionCodes[1])
+                    ? onResultCodes[Math.round(Math.random())] : onResultCodes[2];
+
+                    node['children'].push(obj);
+                    queue.push(obj);
+                }
+
+                // sort oe , os;
+                if (node.action == actionCodes[1]) node['children'].sort(sortResultCodes);
+
+            }
+        };
+
+        function sortResultCodes(a, b) {
+            var code = a.onresult < b.onresult ? 1 : a.onresult > b.onresult ? -1 : 0;
+            return code;
+        };
+
+        /* Search tree using dfs approach. returns the obj of id and list of parents of id.*/
+        function searchTree(id) {
+            var stack = [tree];
+            var parents = [];
+            var objFound = "";
+
+            function dfsTraverse() {
+                var obj = stack[stack.length - 1];
+                if (obj.id == id) {
+                    objFound = obj;
+                    parents = stack.slice(0);
+                }
+
+                if (obj.children) {
+                    for (var i = 0, len = obj.children.length; i < len; i++) {
+                        stack.push(obj.children[i]);
+                        dfsTraverse();
+                    }
+                }
+                stack.pop();
+            };
+
+            dfsTraverse();
+
+            parents.pop();
+
+            return {obj : objFound, parents : parents};
+        };
+
+        this.init = function() {
+            makeTree();
+        };
+
+        this.search = function(id) {
+            return searchTree(id);
+        };
+
+        this.getTree = function() {
+            return tree;
+        };
+    };
+
+    var treeBuilder = new TreeBuilder();
+    treeBuilder.init();
+</script>
+<script type="text/javascript">
+    SvgTree = function(tree) {
+
+        var ns = "http://www.w3.org/2000/svg";
+
+        var mg = document.getElementsByClassName("main-group")[0];
+
+        function makeSvgNode(obj) {
+            var text = document.createElementNS(ns, "text");
+            text.text = obj.name;
+             
+        };
+
+    };
+</script>
+
+<style type="text/css">
+html,body {
+    height: 100%;
+}
+
+.container--ph {
+    height: 0;
+    padding-top: 48%;
+    position: relative;
+}
+
+.svg--responsive {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border: 1px solid;
+}
+</style>
+
+</head>
+<body>
+  <div class="container--ph">
+    <svg class="svg--responsive">
+      <g class="main-group">
+      </g>
+</svg>
+  </div>
+</body>
+</html>
